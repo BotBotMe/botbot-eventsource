@@ -7,6 +7,7 @@ import (
 	"net/http"
 	nurl "net/url"
 	"os"
+        "regexp"
 	"strconv"
 	"strings"
 
@@ -174,38 +175,35 @@ func NewHub() *Hub {
 
 func main() {
 	sseString := os.Getenv("SSE_HOST")
+        sslKey := os.Getenv("SSL_KEY")
+        sslCert := os.Getenv("SSL_CERT")
 	if sseString == "" {
 	log.Fatal("SSE_HOST is not set, example: SSE_HOST=localhost:3000 for non SSL or SSE_HOST=localhost:3001 for SSL. Please set SSL_KEY and SSL_CERT to full path of priv key and cert")
 	}
-  if sseString ~= "3000" {
-  
+  if ok, _ := regexp.Match("3000", []byte(sseString)); ok {
+
   log.Println("[Info] botbot-eventsource is listening on " + sseString)
-  
+
   log.Println("[Info] Starting the eventsource Hub")
   h := NewHub()
-  
-  // eventsource endpoints 
-  http.HandleFunc(ssePath, h.EventSourceHandler)
-  
-  log.Fatalln(http.ListenAndServe(sseString, nil))
-  }
-  else if sslKey == "" {
-  log.Fatal("SSL_KEY is not set, set it to full path to key file")
-  }
-  else if sslCert  == "" {
-  log.Fatal("SSL_CERT is not set, set it to full path to cert file")
-  }
-  else {
-  sslKey := os.Getenv("SSL_KEY")
-  sslCert := os.Getenv("SSL_CERT")
- 
-  log.Println("[Info] botbot-eventsource is listening on " + sseString)
-  
-  log.Println("[Info] Starting the eventsource Hub")
-  h := NewHub()
-  
+
   // eventsource endpoints
   http.HandleFunc(ssePath, h.EventSourceHandler)
-  log.Fatalln(http.ListenAndServeTLS(SSE_HOST, SSL_CERT, SSL_KEY, nil))
+
+  log.Fatalln(http.ListenAndServe(sseString, nil))
+
+  } else if sslKey == "" {
+  log.Fatal("SSL_KEY is not set, set it to full path to key file")
+  } else if sslCert  == "" {
+  log.Fatal("SSL_CERT is not set, set it to full path to cert file")
+  } else {
+  log.Println("[Info] botbot-eventsource is listening on " + sseString)
+
+  log.Println("[Info] Starting the eventsource Hub")
+  h := NewHub()
+
+  // eventsource endpoints
+  http.HandleFunc(ssePath, h.EventSourceHandler)
+  log.Fatalln(http.ListenAndServeTLS(sseString, sslCert, sslKey, nil))
   }
 }
